@@ -1,0 +1,73 @@
+﻿#pragma kernel SwarmMain
+
+struct Swarmer {
+    float3 position;
+    int foundTarget;
+    float life;
+};
+
+struct SwarmTarget {
+    float3 position;
+    float hp;
+};
+
+struct WorldNode {
+    float weakTracer;
+    float strongTracer;
+    float3 weakTracerDir;
+    float3 strongTracerDir;
+};
+
+RWStructuredBuffer<Swarmer> swarmers;
+RWStructuredBuffer<SwarmTarget> targets;
+float3 hivePosition;
+float swarmerVelocity;
+float deltaTime;
+
+RWTexture2D<float4> Result;
+
+/*
+    Create a position for the hive.
+
+    Create a buffer with entitites.
+    
+    Create a buffer with targets (containing direction).
+
+    Create a 3D buffer for path tracers.
+
+    ------------
+
+    Update the position of the swarmers each frame. 
+
+        Set a weak path tracer in the 3D buffer.
+
+    Sample the 3D buffer with path tracers around the current node.
+
+        if a weak tracer is found. modify the direction slightly towards that node.
+
+        if a strong tracer is found. modify the direction strongly towards that node. 
+
+    If a target is found.
+        
+        set a state in the entity (collected = true etc)
+
+        make the entity move back towards the hive via the path tracers (opposire direction of which they are poitning).
+
+    If collected && position == hive.position
+
+        collected = false
+
+    Entities have a timer. If that timer reaches 0 it will return to the hive regardless.
+        
+        during retreat, they will not place pathtracers.
+
+*/
+
+
+[numthreads(8,8,1)]
+void SwarmMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+}

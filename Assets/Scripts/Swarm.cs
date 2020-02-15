@@ -14,17 +14,17 @@ public class Swarm : MonoBehaviour
         public Vector3 position;
         public Vector3 velocity;
         public float life;
+        public float startDelay;
     }
 
     private int NumWorldNodes => worldSize.x * worldSize.y * worldSize.z;
+    private Vector3 HivePosition => worldSize / 2;
 
-    public Vector3Int worldSize = new Vector3Int(10, 10, 10);
+    public Vector3Int worldSize = new Vector3Int(100, 100, 100);
     public Material worldMaterial;
     public Material swarmerMaterial;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
-    public float curlE = 0.1f;
-    public float dir = 1f;
 
     private int kernel;
     private ComputeBuffer worldBuffer;
@@ -38,18 +38,20 @@ public class Swarm : MonoBehaviour
         
         // Create and init compute buffers
         worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
-        swarmBuffer = new ComputeBuffer(numSwarmers, 28);
+        swarmBuffer = new ComputeBuffer(numSwarmers, 32);
         Swarmer[] swarmers = new Swarmer[numSwarmers];
         for (int i = 0; i < swarmers.Length; i++)
         {
-            swarmers[i].position = Vector3.zero + new Vector3(  Random.Range(-0.1f, 0.1f),
+            swarmers[i].position = HivePosition + new Vector3(  Random.Range(-0.1f, 0.1f),
                                                                 Random.Range(-0.1f, 0.1f),
                                                                 Random.Range(-0.1f, 0.1f));
 
             swarmers[i].velocity = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f)).normalized;
-            swarmers[i].life = Random.Range(-10f,20.0f);
+            swarmers[i].life = Random.Range(0f,3.0f);
+
+            swarmers[i].startDelay = 0;// Random.Range(0, 15f);
         }
         swarmBuffer.SetData(swarmers);
         
@@ -59,7 +61,12 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetInt("depth", worldSize.z);
         swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
         swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
-        //swarmComputShader.SetTexture(kernel, "noiseTex", noiseTex)
+        swarmComputShader.SetFloats("hiveX", HivePosition.x);
+        swarmComputShader.SetFloats("hiveY", HivePosition.y);
+        swarmComputShader.SetFloats("hiveZ", HivePosition.z);
+
+        Debug.Log($"Hiveposition: {HivePosition}");
+
 
         // Set rendering materials data
         worldMaterial.SetBuffer("world", worldBuffer);
@@ -74,8 +81,7 @@ public class Swarm : MonoBehaviour
     void Update()
     {
         swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
-        swarmComputShader.SetFloat("curlE", curlE);
-        swarmComputShader.SetFloat("dir", dir);
+        swarmComputShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
 
         //worldBuffer.GetData(reNodes); Buffer filled!

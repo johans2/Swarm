@@ -22,6 +22,7 @@
 				float3 position;	// = 12
 				float3 velocity;	// = 12
 				float life;			// = 4
+				float startDelay;	// = 4
 			};
 
 			struct appdata

@@ -13,6 +13,7 @@ public class Swarm : MonoBehaviour
 
     public Vector3Int worldSize = new Vector3Int(10, 10, 10);
     public Material worldMaterial;
+    public Material swarmerMaterial;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
 
@@ -37,8 +38,9 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
         swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
 
-        // Set rendering material data
+        // Set rendering materials data
         worldMaterial.SetBuffer("world", worldBuffer);
+        swarmerMaterial.SetBuffer("swarmers", swarmBuffer);
 
 
         // Debug
@@ -48,6 +50,7 @@ public class Swarm : MonoBehaviour
 
     void Update()
     {
+        swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
 
 
@@ -56,9 +59,13 @@ public class Swarm : MonoBehaviour
 
     private void OnRenderObject()
     {
-        worldMaterial.SetPass(0);
+        //worldMaterial.SetPass(0);
         
-        Graphics.DrawProceduralNow(MeshTopology.Points, 1, NumWorldNodes);
+        //Graphics.DrawProceduralNow(MeshTopology.Points, 1, NumWorldNodes);
+        
+        swarmerMaterial.SetPass(0);
+
+        Graphics.DrawProceduralNow(MeshTopology.Points, 1, numSwarmers);
     }
 
     private void OnDestroy()

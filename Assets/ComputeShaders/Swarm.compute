@@ -70,12 +70,27 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
     // Flat[x + WIDTH * (y + DEPTH * z)] = Original[x, y, z]
 	// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 
+	// Each thread will work on one swarmer.
+	
+
 	float nodeSize = 0.5;
 	int sampleIndex = id.x + width * (id.y + height * id.z);
 
-	WorldNode node;
-	//node.position 
-	node.occupied = 0;
+	
+	Swarmer swarmer = swarmers[sampleIndex];
+	swarmer.velocity = normalize(float3(id.x, id.y, id.z));
+	swarmer.position += swarmer.velocity * deltaTime;
+	swarmer.life -= deltaTime;
+
+	if (swarmer.life <= 0)
+	{
+		swarmer.position = hivePosition;
+		swarmer.life = 2;
+	}
+
+	swarmers[sampleIndex] = swarmer;
+
+
 	world[sampleIndex].position = float3(id.x, id.y, id.z);
 	world[sampleIndex].occupied = 0;
 }

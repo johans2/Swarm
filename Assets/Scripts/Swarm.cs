@@ -9,6 +9,13 @@ public class Swarm : MonoBehaviour
         Vector3 position;
         float occupied;
     }
+
+    struct Swarmer {
+        public Vector3 position;
+        public Vector3 velocity;
+        public float life;
+    }
+
     private int NumWorldNodes => worldSize.x * worldSize.y * worldSize.z;
 
     public Vector3Int worldSize = new Vector3Int(10, 10, 10);
@@ -16,7 +23,8 @@ public class Swarm : MonoBehaviour
     public Material swarmerMaterial;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
-    public Texture noiseTex;
+    public float curlE = 0.1f;
+    public float dir = 1f;
 
     private int kernel;
     private ComputeBuffer worldBuffer;
@@ -28,9 +36,22 @@ public class Swarm : MonoBehaviour
     {
         kernel = swarmComputShader.FindKernel("SwarmMain");
         
-        // Create compute buffers
+        // Create and init compute buffers
         worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
         swarmBuffer = new ComputeBuffer(numSwarmers, 28);
+        Swarmer[] swarmers = new Swarmer[numSwarmers];
+        for (int i = 0; i < swarmers.Length; i++)
+        {
+            swarmers[i].position = Vector3.zero + new Vector3(  Random.Range(-0.1f, 0.1f),
+                                                                Random.Range(-0.1f, 0.1f),
+                                                                Random.Range(-0.1f, 0.1f));
+
+            swarmers[i].velocity = new Vector3( Random.Range(-1.0f, 1.0f), 
+                                                Random.Range(-1.0f, 1.0f), 
+                                                Random.Range(-1.0f, 1.0f)).normalized;
+            swarmers[i].life = Random.Range(-10f,20.0f);
+        }
+        swarmBuffer.SetData(swarmers);
         
         // Set comput shader data
         swarmComputShader.SetInt("width", worldSize.x);
@@ -38,7 +59,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetInt("depth", worldSize.z);
         swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
         swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
-        //swarmComputShader.SetTexture(kernel, "noiseTex", noiseTex);
+        //swarmComputShader.SetTexture(kernel, "noiseTex", noiseTex)
 
         // Set rendering materials data
         worldMaterial.SetBuffer("world", worldBuffer);
@@ -53,8 +74,9 @@ public class Swarm : MonoBehaviour
     void Update()
     {
         swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
+        swarmComputShader.SetFloat("curlE", curlE);
+        swarmComputShader.SetFloat("dir", dir);
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
-
 
         //worldBuffer.GetData(reNodes); Buffer filled!
     }

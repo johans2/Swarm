@@ -12,19 +12,19 @@ struct SwarmTarget {
 };
 
 struct WorldNode {
-    float weakTracer;
-    float strongTracer;
-    float3 weakTracerDir;
-    float3 strongTracerDir;
+	float3 position;	// = 12
+	float occupied;		// = 4
 };
 
 RWStructuredBuffer<Swarmer> swarmers;
 RWStructuredBuffer<SwarmTarget> targets;
+RWStructuredBuffer<WorldNode> world;
 float3 hivePosition;
 float swarmerVelocity;
 float deltaTime;
-
-RWTexture2D<float4> Result;
+int width;
+int height;
+int depth;
 
 /*
     Create a position for the hive.
@@ -64,10 +64,18 @@ RWTexture2D<float4> Result;
 */
 
 
-[numthreads(8,8,1)]
+[numthreads(10,10,10)]
 void SwarmMain (uint3 id : SV_DispatchThreadID)
 {
-    // TODO: insert actual code here!
+    // Flat[x + WIDTH * (y + DEPTH * z)] = Original[x, y, z]
+	// Flat[x + WIDTH * (y + HEIGHT * z)] = Original[x, y, z]
 
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+	float nodeSize = 0.5;
+	int sampleIndex = id.x + width * (id.y + height * id.z);
+
+	WorldNode node;
+	//node.position 
+	node.occupied = 0;
+	world[sampleIndex].position = float3(id.x, id.y, id.z);
+	world[sampleIndex].occupied = 0;
 }

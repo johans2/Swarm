@@ -1,9 +1,9 @@
 ﻿#pragma kernel SwarmMain
 
 struct Swarmer {
-    float3 position;
-    int foundTarget;
-    float life;
+    float3 position;	// = 12
+	float3 velocity;	// = 12
+    float life;			// = 4
 };
 
 struct SwarmTarget {

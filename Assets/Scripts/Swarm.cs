@@ -9,6 +9,7 @@ public class Swarm : MonoBehaviour
         Vector3 position;
         float occupied;
     }
+    private int NumWorldNodes => worldSize.x * worldSize.y * worldSize.z;
 
     public Vector3Int worldSize = new Vector3Int(10, 10, 10);
     public Material worldMaterial;
@@ -17,26 +18,31 @@ public class Swarm : MonoBehaviour
 
     private int kernel;
     private ComputeBuffer worldBuffer;
-    private int NumWorldNodes => worldSize.x * worldSize.y * worldSize.z;
+    private ComputeBuffer swarmBuffer;
 
     private WorldNode[] debugWorldNodes;
 
     void Start()
     {
         kernel = swarmComputShader.FindKernel("SwarmMain");
-        debugWorldNodes = new WorldNode[NumWorldNodes];
-
-        WorldNode[] nodes = new WorldNode[NumWorldNodes];
-
-        worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
-        worldBuffer.SetData(nodes);
         
+        // Create compute buffers
+        worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
+        swarmBuffer = new ComputeBuffer(numSwarmers, 28);
+        
+        // Set comput shader data
         swarmComputShader.SetInt("width", worldSize.x);
         swarmComputShader.SetInt("height", worldSize.y);
         swarmComputShader.SetInt("depth", worldSize.z);
         swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
+        swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
+
+        // Set rendering material data
         worldMaterial.SetBuffer("world", worldBuffer);
 
+
+        // Debug
+        debugWorldNodes = new WorldNode[NumWorldNodes];
     }
 
 
@@ -44,8 +50,8 @@ public class Swarm : MonoBehaviour
     {
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
 
+
         //worldBuffer.GetData(reNodes); Buffer filled!
-        
     }
 
     private void OnRenderObject()
@@ -58,5 +64,6 @@ public class Swarm : MonoBehaviour
     private void OnDestroy()
     {
         worldBuffer.Dispose();
+        swarmBuffer.Dispose();
     }
 }

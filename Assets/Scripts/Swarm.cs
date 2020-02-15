@@ -16,6 +16,7 @@ public class Swarm : MonoBehaviour
     public Material swarmerMaterial;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
+    public Texture noiseTex;
 
     private int kernel;
     private ComputeBuffer worldBuffer;
@@ -37,6 +38,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetInt("depth", worldSize.z);
         swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
         swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
+        //swarmComputShader.SetTexture(kernel, "noiseTex", noiseTex);
 
         // Set rendering materials data
         worldMaterial.SetBuffer("world", worldBuffer);

@@ -26,6 +26,25 @@ int width;
 int height;
 int depth;
 
+uint rng_state;
+uint rand_xorshift()
+{
+	rng_state ^= (rng_state << 13);
+	rng_state ^= (rng_state >> 17);
+	rng_state ^= (rng_state << 5);
+	return rng_state;
+}
+
+uint wang_hash(uint seed)
+{
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return seed;
+}
+
 /*
     Create a position for the hive.
 
@@ -78,13 +97,26 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 	
 	Swarmer swarmer = swarmers[sampleIndex];
-	swarmer.velocity = normalize(float3(id.x, id.y, id.z));
+	//swarmer.velocity = normalize(float3(id.x, id.y, id.z));
 	swarmer.position += swarmer.velocity * deltaTime;
 	swarmer.life -= deltaTime;
 
 	if (swarmer.life <= 0)
 	{
+		rng_state = sampleIndex;
+
+		// Generate a few numbers...
+		float r0 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+		rand_xorshift();
+		float r1 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+		rand_xorshift();
+		float r2 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+		rand_xorshift();
+		// Do some stuff with them...
+
+		
 		swarmer.position = hivePosition;
+		swarmer.velocity = normalize(float3(r0, r1, r2));
 		swarmer.life = 2;
 	}
 

@@ -20,6 +20,7 @@ struct WorldNode {
 RWStructuredBuffer<Swarmer> swarmers;
 RWStructuredBuffer<SwarmTarget> targets;
 RWStructuredBuffer<WorldNode> world;
+//RWTexture3D<float4> worldl;
 float hiveX;
 float hiveY;
 float hiveZ;

@@ -27,6 +27,11 @@ public class Swarm : MonoBehaviour
     public RenderTexture worldTexture;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
+    public float traceAdd = 0.01f;
+    public float traceDecay = 0.01f;
+    public float spawnRange = 20f;
+    public float traceAttraction = 0.005f;
+    public float swarmerSpeed = 30;
 
     private int kernel;
     private ComputeBuffer worldBuffer;
@@ -51,9 +56,9 @@ public class Swarm : MonoBehaviour
         Swarmer[] swarmers = new Swarmer[numSwarmers];
         for (int i = 0; i < swarmers.Length; i++)
         {
-            swarmers[i].position = HivePosition + new Vector3(  Random.Range(-0.1f, 0.1f),
-                                                                Random.Range(-0.1f, 0.1f),
-                                                                Random.Range(-0.1f, 0.1f));
+            swarmers[i].position = HivePosition + new Vector3(  Random.Range(-spawnRange, spawnRange),
+                                                                Random.Range(-spawnRange, spawnRange),
+                                                                Random.Range(-spawnRange, spawnRange));
 
             swarmers[i].velocity = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 
@@ -74,6 +79,10 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloats("hiveX", HivePosition.x);
         swarmComputShader.SetFloats("hiveY", HivePosition.y);
         swarmComputShader.SetFloats("hiveZ", HivePosition.z);
+        swarmComputShader.SetFloats("traceAdd", traceAdd);
+        swarmComputShader.SetFloats("traceAdd", traceDecay);
+        swarmComputShader.SetFloat("traceAttraction", traceAttraction);
+        swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
 
         Debug.Log($"Hiveposition: {HivePosition}");
 
@@ -93,6 +102,10 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
         swarmComputShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
+        swarmComputShader.SetFloats("traceAdd", traceAdd);
+        swarmComputShader.SetFloats("traceAdd", traceDecay);
+        swarmComputShader.SetFloat("traceAttraction", traceAttraction);
+        swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
 
         //worldBuffer.GetData(reNodes); Buffer filled!
     }

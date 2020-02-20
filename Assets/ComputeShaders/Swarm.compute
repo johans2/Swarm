@@ -1,7 +1,7 @@
 ﻿#pragma kernel SwarmMain
 struct Swarmer {
     float3 position;	// = 12
-	float3 velocity;	// = 12
+	float3 direction;	// = 12
     float life;			// = 4
 	float startDelay;	// = 4
 	float3 color;		// = 12
@@ -12,15 +12,8 @@ struct SwarmTarget {
     float hp;
 };
 
-struct WorldNode {
-	float3 position;	// = 12
-	float occupied;		// = 4
-	float trace;
-};
-
 RWStructuredBuffer<Swarmer> swarmers;
 RWStructuredBuffer<SwarmTarget> targets;
-//RWStructuredBuffer<WorldNode> world;
 RWTexture3D<float4> worldTex;
 float hiveX;
 float hiveY;
@@ -33,6 +26,10 @@ int height;
 int depth;
 float curlE;
 float dir;
+float traceAdd;
+float traceDecay;
+float traceAttraction;
+float swarmerSpeed;
 
 
 uint rng_state;
@@ -68,41 +65,34 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 {
 	int sampleIndex = id.x + width * (id.y + height * id.z);
 	
-
-	// Reduce the trace of all nodes in the world.
-	//world[sampleIndex].position = float3(id.x, id.y, id.z);
-	//world[sampleIndex].trace = max(0, world[sampleIndex].trace - 0.06);
-
-	worldTex[id.xyz] = float4(max(0, worldTex[id.xyz].x - 0.06), 0,0,0);
+	// Decay the trace
+	worldTex[id.xyz] = float4(max(0, worldTex[id.xyz].x - traceDecay), 0,0,0);
 	
+	// Get the swarmer from the buffer
 	Swarmer swarmer = swarmers[sampleIndex];
 	swarmer.life -= deltaTime;
-	swarmer.position += swarmer.velocity * deltaTime * 30;
+	swarmer.position += swarmer.direction * deltaTime * swarmerSpeed;
 	
+	// Check if inside bounds
 	bool insideWidth = swarmer.position.x >= 0 && swarmer.position.x <= 100;
 	bool insideHeight = swarmer.position.y >= 0 && swarmer.position.y <= 100;
 	bool insideDepth = swarmer.position.z >= 0 && swarmer.position.z <= 100;
 
 	if (!insideWidth || !insideHeight || !insideDepth)
 	{
-		swarmer.velocity = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position) + RandomDirection(sampleIndex) * 0.6);
+		swarmer.direction = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position) + RandomDirection(sampleIndex) * 0.6);
 	}
 
+	// Get the swarmer world coord
+	uint3 swarmerWorldCoord = uint3(swarmer.position.x, swarmer.position.y, swarmer.position.z);
 
-	int swarmerSampleIndex = trunc(swarmer.position.x) + width * (trunc(swarmer.position.y) + height * trunc(swarmer.position.z));
-	uint3 si = uint3(swarmer.position.x, swarmer.position.y, swarmer.position.z);
+	// Add trace from the swarmer
+	worldTex[swarmerWorldCoord] = float4(min(worldTex[swarmerWorldCoord].x + traceAdd, 1), 0,0,0);
 
-		worldTex[si] = float4(min(worldTex[si].x + 0.01, 1), 0,0,0);
-
-	if (swarmer.life <= 0)
-	{
-		swarmer.life = 0.2;
-	}
 
 	float highestTrace = 0;
-	//WorldNode bestNeightbour;
 	uint3 bestNeightbour;
-	float3 bestDirection = swarmer.velocity;
+	float3 bestDirection = swarmer.direction;
 	float3 color = float3(1, 0, 0);
 
 	for (int x = -1; x <= 1; x++)
@@ -111,33 +101,23 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 		{
 			for (int z = -1; z <= 1; z++)
 			{
-				uint3 neightbourSampleIndex = uint3(swarmer.position.x + x, swarmer.position.y + y, swarmer.position.z + z);// swarmer.position.x + x + width * (swarmer.position.y + y + height * (swarmer.position.z + z));
+				uint3 neightbourSampleIndex = uint3(swarmer.position.x + x, swarmer.position.y + y, swarmer.position.z + z);
 				//WorldNode wn = world[neightbourSampleIndex];
 				float trace = worldTex[neightbourSampleIndex].x;
-				if (trace > highestTrace)
+				bool isMyPos = x == int(swarmer.position.x) && y == int(swarmer.position.y) && z == int(swarmer.position.z);
+				if (trace > highestTrace && !isMyPos)
 				{
 					highestTrace = trace;
 					bestNeightbour = neightbourSampleIndex;
 					bestDirection = worldTex[neightbourSampleIndex].xyz - swarmer.position;
-					color = float3(float(bestNeightbour.x) / 100, float(bestNeightbour.y) / 100, float(bestNeightbour.z) / 100);
+					color = float3(0, highestTrace, 0); //float3(float(bestNeightbour.x) / 100, float(bestNeightbour.y) / 100, float(bestNeightbour.z) / 100);
 				}
 			}
 		}
 	}
 
-	swarmer.velocity = lerp(swarmer.velocity, normalize(bestDirection), 0.0005);
+	swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
 	swarmer.color = color;
-
-
-
-	/*
-	if (swarmer.life <= 0)
-	{
-		//swarmer.position = hivePosition + RandomDirection(sampleIndex)/ 10.0;
-		//swarmer.startDelay = RandomDirection(sampleIndex).x;
-		swarmer.velocity *= -1;
-		swarmer.life = 10;
-	}*/
 
 	swarmers[sampleIndex] = swarmer;
 

@@ -805,7 +805,12 @@ MonoBehaviour:
   swarmerMaterial: {fileID: 2100000, guid: 9f702ceaccae7044ab28bf7704f1df75, type: 2}
   worldTexture: {fileID: 8400000, guid: 2c048c9cfe5e31343b3c8c2a5ed0be5e, type: 2}
   swarmComputShader: {fileID: 7200000, guid: b6ae997d2d1261641a168e201c64c291, type: 3}
-  numSwarmers: 100000
+  numSwarmers: 10000
+  traceAdd: 0.1
+  traceDecay: 1
+  spawnRange: 45
+  traceAttraction: 0.005
+  swarmerSpeed: 30
 --- !u!4 &1180056163
 Transform:
   m_ObjectHideFlags: 0
@@ -856,7 +861,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 0}
+  m_BackGroundColor: {r: 0.2264151, g: 0.2264151, b: 0.2264151, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

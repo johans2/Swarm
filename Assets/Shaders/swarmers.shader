@@ -23,6 +23,7 @@
 				float3 velocity;	// = 12
 				float life;			// = 4
 				float startDelay;	// = 4
+				float3 color;
 			};
 
 			struct appdata
@@ -33,6 +34,7 @@
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
+				float3 color : TEXCOORD1;
 			};
 
 			half4 _Color;
@@ -45,13 +47,16 @@
 
 				Swarmer swarmer = swarmers[instance_id];
 				output.vertex = UnityObjectToClipPos(swarmer.position);
+				output.color = swarmer.color;
 
 				return output;
 			}
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				return _Color;
+				fixed4 col = _Color;
+				col.rgb += i.color;
+				return col;
 			}
 			ENDCG
 		}

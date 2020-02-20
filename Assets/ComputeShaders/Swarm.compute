@@ -4,6 +4,7 @@ struct Swarmer {
 	float3 velocity;	// = 12
     float life;			// = 4
 	float startDelay;	// = 4
+	float3 color;		// = 12
 };
 
 struct SwarmTarget {
@@ -19,8 +20,8 @@ struct WorldNode {
 
 RWStructuredBuffer<Swarmer> swarmers;
 RWStructuredBuffer<SwarmTarget> targets;
-RWStructuredBuffer<WorldNode> world;
-//RWTexture3D<float4> worldl;
+//RWStructuredBuffer<WorldNode> world;
+RWTexture3D<float4> worldTex;
 float hiveX;
 float hiveY;
 float hiveZ;
@@ -69,8 +70,10 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	
 
 	// Reduce the trace of all nodes in the world.
-	world[sampleIndex].position = float3(id.x, id.y, id.z);
-	world[sampleIndex].trace = max(0, world[sampleIndex].trace - 0.06);
+	//world[sampleIndex].position = float3(id.x, id.y, id.z);
+	//world[sampleIndex].trace = max(0, world[sampleIndex].trace - 0.06);
+
+	worldTex[id.xyz] = float4(max(0, worldTex[id.xyz].x - 0.06), 0,0,0);
 	
 	Swarmer swarmer = swarmers[sampleIndex];
 	swarmer.life -= deltaTime;
@@ -87,36 +90,44 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 
 	int swarmerSampleIndex = trunc(swarmer.position.x) + width * (trunc(swarmer.position.y) + height * trunc(swarmer.position.z));
-	
+	uint3 si = uint3(swarmer.position.x, swarmer.position.y, swarmer.position.z);
+
+		worldTex[si] = float4(min(worldTex[si].x + 0.01, 1), 0,0,0);
+
 	if (swarmer.life <= 0)
 	{
-		world[swarmerSampleIndex].trace = min(world[swarmerSampleIndex].trace + 0.06, 1);
-		swarmer.life = 0.5;
+		swarmer.life = 0.2;
 	}
 
 	float highestTrace = 0;
-	WorldNode bestNeightbour;
+	//WorldNode bestNeightbour;
+	uint3 bestNeightbour;
+	float3 bestDirection = swarmer.velocity;
+	float3 color = float3(1, 0, 0);
 
-	for (int x = -1; x <= 1; x+=2)
+	for (int x = -1; x <= 1; x++)
 	{
-		for (int y = -1; y <= 1; y+=2)
+		for (int y = -1; y <= 1; y++)
 		{
-			for (int z = -1; z <= 1; z+=2)
+			for (int z = -1; z <= 1; z++)
 			{
-				int neightbourSampleIndex = swarmer.position.x + x + width * (swarmer.position.y + y + height * (swarmer.position.z + z));
-				WorldNode wn = world[neightbourSampleIndex];
-				highestTrace = max(wn.trace, highestTrace);
-				if (wn.trace > highestTrace)
+				uint3 neightbourSampleIndex = uint3(swarmer.position.x + x, swarmer.position.y + y, swarmer.position.z + z);// swarmer.position.x + x + width * (swarmer.position.y + y + height * (swarmer.position.z + z));
+				//WorldNode wn = world[neightbourSampleIndex];
+				float trace = worldTex[neightbourSampleIndex].x;
+				if (trace > highestTrace)
 				{
-					highestTrace = wn.trace;
-					bestNeightbour = wn;
+					highestTrace = trace;
+					bestNeightbour = neightbourSampleIndex;
+					bestDirection = worldTex[neightbourSampleIndex].xyz - swarmer.position;
+					color = float3(float(bestNeightbour.x) / 100, float(bestNeightbour.y) / 100, float(bestNeightbour.z) / 100);
 				}
 			}
 		}
 	}
 
-	swarmer.velocity = lerp(swarmer.velocity, normalize(bestNeightbour.position - swarmer.position), 0.0005);
-	
+	swarmer.velocity = lerp(swarmer.velocity, normalize(bestDirection), 0.0005);
+	swarmer.color = color;
+
 
 
 	/*

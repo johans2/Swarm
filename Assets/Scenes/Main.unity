@@ -803,6 +803,7 @@ MonoBehaviour:
   worldSize: {x: 100, y: 100, z: 100}
   worldMaterial: {fileID: 2100000, guid: 0e86b39d2eea79c4097d42130e383b7c, type: 2}
   swarmerMaterial: {fileID: 2100000, guid: 9f702ceaccae7044ab28bf7704f1df75, type: 2}
+  worldTexture: {fileID: 8400000, guid: 2c048c9cfe5e31343b3c8c2a5ed0be5e, type: 2}
   swarmComputShader: {fileID: 7200000, guid: b6ae997d2d1261641a168e201c64c291, type: 3}
   numSwarmers: 100000
 --- !u!4 &1180056163

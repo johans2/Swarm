@@ -83,7 +83,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloats("hiveY", HivePosition.y);
         swarmComputShader.SetFloats("hiveZ", HivePosition.z);
         swarmComputShader.SetFloats("traceAdd", traceAdd);
-        swarmComputShader.SetFloats("traceAdd", traceDecay);
+        swarmComputShader.SetFloats("traceDecay", traceDecay);
         swarmComputShader.SetFloat("traceAttraction", traceAttraction);
         swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
 
@@ -106,7 +106,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);
         swarmComputShader.Dispatch(kernel, 10, 10, 10);
         swarmComputShader.SetFloats("traceAdd", traceAdd);
-        swarmComputShader.SetFloats("traceAdd", traceDecay);
+        swarmComputShader.SetFloats("traceDecay", traceDecay);
         swarmComputShader.SetFloat("traceAttraction", traceAttraction);
         swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
 

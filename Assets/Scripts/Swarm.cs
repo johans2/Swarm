@@ -38,6 +38,13 @@ public class Swarm : MonoBehaviour
     private ComputeBuffer swarmBuffer;
 
     private WorldNode[] debugWorldNodes;
+    private Matrix4x4 rotMat1;
+    private Matrix4x4 rotMat2;
+    private Matrix4x4 rotMat3;
+    private Matrix4x4 rotMat4;
+    private Matrix4x4 rotMat5;
+    private Matrix4x4 rotMat6;
+    private float sampleSpread = 60f;
 
     private RenderTexture CreateRenderTexture() {
         RenderTexture r = new RenderTexture(100, 100, 0, RenderTextureFormat.ARGB32);
@@ -48,9 +55,33 @@ public class Swarm : MonoBehaviour
         return r;
     }
 
+    private void CreateRotationMatrices()
+    {
+        var q1 = Quaternion.Euler(sampleSpread, 0, 0);
+        rotMat1 = Matrix4x4.Rotate(q1);
+        
+        var q2 = Quaternion.Euler(0, sampleSpread, 0);
+        rotMat2 = Matrix4x4.Rotate(q2);
+        
+        var q3 = Quaternion.Euler(0, 0, sampleSpread);
+        rotMat3 = Matrix4x4.Rotate(q3);
+        
+        var q4 = Quaternion.Euler(-sampleSpread, 0, 0);
+        rotMat4 = Matrix4x4.Rotate(q4);
+        
+        var q5 = Quaternion.Euler(0, -sampleSpread, 0);
+        rotMat5 = Matrix4x4.Rotate(q5);
+        
+        var q6 = Quaternion.Euler(0, 0, -sampleSpread);
+        rotMat6 = Matrix4x4.Rotate(q6);
+    }
+
     void Start()
     {
         kernel = swarmComputShader.FindKernel("SwarmMain");
+
+        // Create rotation matrices
+        CreateRotationMatrices();
 
         // Create and init compute buffers
         worldTexture = CreateRenderTexture();
@@ -86,6 +117,12 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloats("traceDecay", traceDecay);
         swarmComputShader.SetFloat("traceAttraction", traceAttraction);
         swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
+        swarmComputShader.SetMatrix("rot1", rotMat1);
+        swarmComputShader.SetMatrix("rot2", rotMat2);
+        swarmComputShader.SetMatrix("rot3", rotMat3);
+        swarmComputShader.SetMatrix("rot4", rotMat4);
+        swarmComputShader.SetMatrix("rot5", rotMat5);
+        swarmComputShader.SetMatrix("rot6", rotMat6);
 
         Debug.Log($"Hiveposition: {HivePosition}");
 
@@ -100,7 +137,7 @@ public class Swarm : MonoBehaviour
     }
 
 
-    void Update()
+    void FixedUpdate()
     {
         swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
         swarmComputShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);

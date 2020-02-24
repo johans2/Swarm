@@ -12,7 +12,7 @@ public class Swarm : MonoBehaviour
 
     struct Swarmer {
         public Vector3 position;
-        public Vector3 velocity;
+        public Vector3 direction;
         public float life;
         public float startDelay;
         public Vector3 color;
@@ -24,7 +24,7 @@ public class Swarm : MonoBehaviour
     public Vector3Int worldSize = new Vector3Int(100, 100, 100);
     public Material worldMaterial;
     public Material swarmerMaterial;
-    public RenderTexture worldTexture;
+    private RenderTexture worldTexture;
     public ComputeShader swarmComputShader;
     public int numSwarmers = 100000;
     public float traceAdd = 0.01f;
@@ -40,8 +40,11 @@ public class Swarm : MonoBehaviour
     private WorldNode[] debugWorldNodes;
 
     private RenderTexture CreateRenderTexture() {
-        RenderTexture r = new RenderTexture(100, 100, 100, RenderTextureFormat.ARGB32);
+        RenderTexture r = new RenderTexture(100, 100, 0, RenderTextureFormat.ARGB32);
+        r.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
+        r.volumeDepth = 100;
         r.enableRandomWrite = true;
+        r.Create();
         return r;
     }
 
@@ -50,7 +53,7 @@ public class Swarm : MonoBehaviour
         kernel = swarmComputShader.FindKernel("SwarmMain");
 
         // Create and init compute buffers
-        worldTexture.enableRandomWrite = true;
+        worldTexture = CreateRenderTexture();
         worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
         swarmBuffer = new ComputeBuffer(numSwarmers, 44);
         Swarmer[] swarmers = new Swarmer[numSwarmers];
@@ -60,7 +63,7 @@ public class Swarm : MonoBehaviour
                                                                 Random.Range(-spawnRange, spawnRange),
                                                                 Random.Range(-spawnRange, spawnRange));
 
-            swarmers[i].velocity = new Vector3( Random.Range(-1.0f, 1.0f), 
+            swarmers[i].direction = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f)).normalized;
             swarmers[i].life = Random.Range(0f,3.0f);
@@ -107,6 +110,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloat("traceAttraction", traceAttraction);
         swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
 
+
         //worldBuffer.GetData(reNodes); Buffer filled!
     }
 
@@ -125,5 +129,6 @@ public class Swarm : MonoBehaviour
     {
         worldBuffer.Dispose();
         swarmBuffer.Dispose();
+        
     }
 }

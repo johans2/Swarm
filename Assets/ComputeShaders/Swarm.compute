@@ -66,7 +66,7 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	int sampleIndex = id.x + width * (id.y + height * id.z);
 	
 	// Decay the trace
-	worldTex[id.xyz] = float4(max(0, worldTex[id.xyz].x - traceDecay), 0,0,0);
+	worldTex[id.xyz] = float4(max(0, worldTex[id.xyz].x - traceDecay), 0, 0, 0); // float4(float(id.x) / 100.0, float(id.y) / 100.0, float(id.z) / 100.0, 1);// 
 	
 	// Get the swarmer from the buffer
 	Swarmer swarmer = swarmers[sampleIndex];
@@ -84,12 +84,14 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	}
 
 	// Get the swarmer world coord
-	uint3 swarmerWorldCoord = uint3(swarmer.position.x, swarmer.position.y, swarmer.position.z);
+	int3 swarmerWorldCoord = int3(int(swarmer.position.x),int(swarmer.position.y), int(swarmer.position.z));
+
+
 
 	// Add trace from the swarmer
 	worldTex[swarmerWorldCoord] = float4(min(worldTex[swarmerWorldCoord].x + traceAdd, 1), 0,0,0);
 
-
+	/*
 	float highestTrace = 0;
 	uint3 bestNeightbour;
 	float3 bestDirection = swarmer.direction;
@@ -115,9 +117,18 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 			}
 		}
 	}
+	*/
 
-	swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
-	swarmer.color = color;
+	float3 swarmerSampleDirection = swarmer.position + swarmer.direction*1.5;
+	int3 swarmerSampleCoord = int3(int(swarmerSampleDirection.x), int(swarmerSampleDirection.y), int(swarmerSampleDirection.z));
+	float traceAtSample = worldTex[swarmerSampleCoord].x;
+	float3 dir = worldTex[swarmerSampleCoord].xyz - swarmer.position;
+
+	//swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
+	swarmer.direction = normalize(lerp(swarmer.direction, normalize(dir), traceAtSample * traceAttraction));
+	swarmer.color = float3(traceAtSample, 0, 0);
+	//swarmer.color = float3(float(id.x) / 100.0, float(id.y) / 100.0, float(id.z) / 100.0);
+	//swarmer.color = swarmer.position/100;
 
 	swarmers[sampleIndex] = swarmer;
 

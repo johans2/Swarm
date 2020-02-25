@@ -12,6 +12,7 @@ public class Swarm : MonoBehaviour
 
     struct Swarmer {
         public Vector3 position;
+        public Vector3 previousPosition;
         public Vector3 direction;
         public float life;
         public float startDelay;
@@ -86,13 +87,15 @@ public class Swarm : MonoBehaviour
         // Create and init compute buffers
         worldTexture = CreateRenderTexture();
         worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
-        swarmBuffer = new ComputeBuffer(numSwarmers, 44);
+        swarmBuffer = new ComputeBuffer(numSwarmers, 56);
         Swarmer[] swarmers = new Swarmer[numSwarmers];
         for (int i = 0; i < swarmers.Length; i++)
         {
             swarmers[i].position = HivePosition + new Vector3(  Random.Range(-spawnRange, spawnRange),
                                                                 Random.Range(-spawnRange, spawnRange),
                                                                 Random.Range(-spawnRange, spawnRange));
+
+            swarmers[i].previousPosition = swarmers[i].position;
 
             swarmers[i].direction = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 

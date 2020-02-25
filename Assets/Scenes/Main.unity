@@ -805,8 +805,8 @@ MonoBehaviour:
   swarmerMaterial: {fileID: 2100000, guid: 9f702ceaccae7044ab28bf7704f1df75, type: 2}
   swarmComputShader: {fileID: 7200000, guid: b6ae997d2d1261641a168e201c64c291, type: 3}
   numSwarmers: 100000
-  traceAdd: 0.2
-  traceDecay: 0.04
+  traceAdd: 0.001
+  traceDecay: 0.001
   spawnRange: 45
   traceAttraction: 0.02
   swarmerSpeed: 30

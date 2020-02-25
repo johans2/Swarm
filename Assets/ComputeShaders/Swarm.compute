@@ -123,28 +123,25 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 	float3 bestDir = swarmer.position + swarmer.direction * 1.5;
 	float bestTrace = 0;
+
 	[unroll]
 	for (int i = 0; i < 6; i++)
 	{
 		float3 dir = sampleDirs[i];
 		float trace = worldTex[dir].x;
 
-		if (trace > bestTrace)
-		{
-			bestDir = dir;
-			bestTrace = trace;
-		}
+		float stepVal = step(bestTrace, trace);
+		bestDir = lerp(bestDir, dir, stepVal);
+		bestTrace = lerp(bestTrace, trace, stepVal);
 	}
-
-	
 
 	int3 swarmerSampleCoord = int3(int(bestDir.x), int(bestDir.y), int(bestDir.z));
 	float traceAtSample = worldTex[swarmerSampleCoord].x;
 	float3 dir = float3(swarmerSampleCoord.x, swarmerSampleCoord.y, swarmerSampleCoord.z) - swarmer.position;
 
 	//swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
-	swarmer.direction = normalize(lerp(swarmer.direction, normalize(dir), traceAtSample * traceAttraction));
-	swarmer.color = float3(traceAtSample, 0, 0);//float3(float(swarmerSampleCoord.x) / 100.0, float(swarmerSampleCoord.y) / 100.0, float(swarmerSampleCoord.z) / 100.0);  
+	swarmer.direction = normalize(lerp(swarmer.direction, normalize(dir), traceAttraction));
+	swarmer.color = float3(traceAtSample * 100, 0, 0);//float3(float(swarmerSampleCoord.x) / 100.0, float(swarmerSampleCoord.y) / 100.0, float(swarmerSampleCoord.z) / 100.0);  
 		
 	//swarmer.color = float3(float(id.x) / 100.0, float(id.y) / 100.0, float(id.z) / 100.0);
 	//swarmer.color = swarmer.position/100;

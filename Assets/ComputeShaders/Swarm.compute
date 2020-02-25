@@ -132,6 +132,7 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 		if (trace > bestTrace)
 		{
 			bestDir = dir;
+			bestTrace = trace;
 		}
 	}
 

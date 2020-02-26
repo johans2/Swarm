@@ -33,6 +33,7 @@ public class Swarm : MonoBehaviour
     public float spawnRange = 20f;
     public float traceAttraction = 0.005f;
     public float swarmerSpeed = 30;
+    public float randomness = 0.3f;
 
     private int kernel;
     private ComputeBuffer worldBuffer;
@@ -126,6 +127,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetMatrix("rot4", rotMat4);
         swarmComputShader.SetMatrix("rot5", rotMat5);
         swarmComputShader.SetMatrix("rot6", rotMat6);
+        swarmComputShader.SetFloat("randomness", randomness);
 
         Debug.Log($"Hiveposition: {HivePosition}");
 
@@ -149,6 +151,7 @@ public class Swarm : MonoBehaviour
         swarmComputShader.SetFloats("traceDecay", traceDecay);
         swarmComputShader.SetFloat("traceAttraction", traceAttraction);
         swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
+        swarmComputShader.SetFloat("randomness", randomness);
 
 
         //worldBuffer.GetData(reNodes); Buffer filled!

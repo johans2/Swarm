@@ -31,6 +31,7 @@ float traceAdd;
 float traceDecay;
 float traceAttraction;
 float swarmerSpeed;
+float randomness;
 
 
 float4x4 rot1;
@@ -87,7 +88,7 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	
 	// Update the swarmer position;
 	swarmer.previousPosition = swarmer.position;
-	swarmer.position += (swarmer.direction + RandomDirection(sampleIndex)*0.6) * deltaTime * swarmerSpeed;
+	swarmer.position += normalize((swarmer.direction + RandomDirection(sampleIndex)* randomness)) * deltaTime * swarmerSpeed;
 	
 	// Check if entered new worldnode
 	int3 prevPosCoord = int3(int(swarmer.previousPosition.x), int(swarmer.previousPosition.y), int(swarmer.previousPosition.z));
@@ -97,7 +98,7 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	if (posCoord.x != prevPosCoord.x || posCoord.y != prevPosCoord.y || posCoord.z != prevPosCoord.z)
 	{
 		worldTex[prevPosCoord] = float4(worldTex[prevPosCoord].x, worldTex[prevPosCoord].y - 1, 0, 0);
-		worldTex[posCoord] = float4(worldTex[posCoord].x, worldTex[posCoord].y + 1, 0, 0);
+		worldTex[posCoord] = float4(worldTex[posCoord].x + traceAdd, worldTex[posCoord].y + 1, 0, 0);
 		//swarmer.color = worldTex[posCoord].xyz;
 	}
 	//swarmer.color = float3(1,0,0) * worldTex[posCoord].y;
@@ -108,14 +109,14 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 	if (!insideWidth || !insideHeight || !insideDepth)
 	{
-		swarmer.direction = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position) + RandomDirection(sampleIndex) * 0.5);
+		swarmer.direction = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position) + RandomDirection(sampleIndex) * 0.8);
 	}
 
 	// Get the swarmer world coord
 	int3 swarmerWorldCoord = int3(int(swarmer.position.x),int(swarmer.position.y), int(swarmer.position.z));
 
 	// Add trace from the swarmer
-	worldTex[swarmerWorldCoord] = float4(min(worldTex[swarmerWorldCoord].x + traceAdd * deltaTime, 1), 0,0,0);
+	//worldTex[swarmerWorldCoord] = float4(min(worldTex[swarmerWorldCoord].x + traceAdd * deltaTime, 1), 0,0,0);
 
 
 
@@ -154,14 +155,13 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 	// Om jag inte hittar någon riktning att gå. Vänd bakåt..eller stå still?
 
-	int3 swarmerSampleCoord = int3(int(bestTarget.x), int(bestTarget.y), int(bestTarget.z));
 	float traceAtTarget = worldTex[bestTarget].x;// worldTex[swarmerSampleCoord].x;
-	float3 traceDir = float3(swarmerSampleCoord.x, swarmerSampleCoord.y, swarmerSampleCoord.z) + float3(0.5,0.5,0.5) - swarmer.position;
+	float3 traceDir = bestTarget - swarmer.position;
 
 	//swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
 	swarmer.direction = normalize(lerp(swarmer.direction, normalize(traceDir), traceAttraction));
 	//swarmer.color = float3(traceAtSample * 100, 0, 0);//float3(float(swarmerSampleCoord.x) / 100.0, float(swarmerSampleCoord.y) / 100.0, float(swarmerSampleCoord.z) / 100.0);  
-	swarmer.color = float3(worldTex[swarmerSampleCoord].y / maxPopulation, 0, 0);
+	swarmer.color = float3(traceAtTarget, 0, 0);
 
 	//swarmer.color = float3(float(id.x) / 100.0, float(id.y) / 100.0, float(id.z) / 100.0);
 	//swarmer.color = swarmer.position/100;

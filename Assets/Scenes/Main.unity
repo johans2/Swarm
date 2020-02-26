@@ -804,12 +804,13 @@ MonoBehaviour:
   worldMaterial: {fileID: 2100000, guid: 0e86b39d2eea79c4097d42130e383b7c, type: 2}
   swarmerMaterial: {fileID: 2100000, guid: 9f702ceaccae7044ab28bf7704f1df75, type: 2}
   swarmComputShader: {fileID: 7200000, guid: b6ae997d2d1261641a168e201c64c291, type: 3}
-  numSwarmers: 100000
-  traceAdd: 0.002
-  traceDecay: 0.003
+  numSwarmers: 50000
+  traceAdd: 0.02
+  traceDecay: 0.04
   spawnRange: 1
-  traceAttraction: 0.03
+  traceAttraction: 0.02
   swarmerSpeed: 25
+  randomness: 0.4
 --- !u!4 &1180056163
 Transform:
   m_ObjectHideFlags: 0

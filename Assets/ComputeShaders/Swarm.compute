@@ -32,6 +32,7 @@ float traceDecay;
 float traceAttraction;
 float swarmerSpeed;
 
+
 float4x4 rot1;
 float4x4 rot2;
 float4x4 rot3;
@@ -39,7 +40,7 @@ float4x4 rot4;
 float4x4 rot5;
 float4x4 rot6;
 
-float3 sampleDirs[6];
+float3 samplePositions[6];
 
 uint rng_state;
 uint rand_xorshift()
@@ -126,15 +127,15 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	float4 s5 = mul(rot5, float4(swarmer.direction, 1));
 	float4 s6 = mul(rot6, float4(swarmer.direction, 1));
 
-	sampleDirs[0] = swarmer.position + s1.xyz * 1.42; 
-	sampleDirs[1] = swarmer.position + s2.xyz * 1.42;
-	sampleDirs[2] = swarmer.position + s3.xyz * 1.42;
-	sampleDirs[4] = swarmer.position + s4.xyz * 1.42;
-	sampleDirs[5] = swarmer.position + s5.xyz * 1.42;
+	samplePositions[0] = swarmer.position + s1.xyz * 1.42; 
+	samplePositions[1] = swarmer.position + s2.xyz * 1.42;
+	samplePositions[2] = swarmer.position + s3.xyz * 1.42;
+	samplePositions[4] = swarmer.position + s4.xyz * 1.42;
+	samplePositions[5] = swarmer.position + s5.xyz * 1.42;
 
 
 	// Get the direction where the trace is highest
-	float3 bestDir = swarmer.position + swarmer.direction * 1.5;
+	float3 bestTarget = swarmer.position + swarmer.direction * 1.5;
 	float bestTrace = 0;
 
 	float maxPopulation = 20;
@@ -142,25 +143,25 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	[unroll]
 	for (int i = 0; i < 6; i++)
 	{
-		float3 dir = sampleDirs[i];
-		float trace = worldTex[dir].x;
-		trace *= step(worldTex[dir].y, maxPopulation);
+		float3 pos = samplePositions[i];
+		float trace = worldTex[pos].x;
+		trace *= step(worldTex[pos].y, maxPopulation);
 
 		float stepVal = step(bestTrace, trace);
-		// Kombinera detta med att kolla population och multiplicera..swarmers måste uppdatera population.
-
-		bestDir = lerp(bestDir, dir, stepVal);
+		bestTarget = lerp(bestTarget, pos, stepVal);
 		bestTrace = lerp(bestTrace, trace, stepVal);
 	}
 
-	int3 swarmerSampleCoord = int3(int(bestDir.x), int(bestDir.y), int(bestDir.z));
-	float traceAtSample = worldTex[swarmerSampleCoord].x;
-	float3 dir = float3(swarmerSampleCoord.x, swarmerSampleCoord.y, swarmerSampleCoord.z) + float3(0.5,0.5,0.5) - swarmer.position;
+	// Om jag inte hittar någon riktning att gå. Vänd bakåt..eller stå still?
+
+	int3 swarmerSampleCoord = int3(int(bestTarget.x), int(bestTarget.y), int(bestTarget.z));
+	float traceAtTarget = worldTex[bestTarget].x;// worldTex[swarmerSampleCoord].x;
+	float3 traceDir = float3(swarmerSampleCoord.x, swarmerSampleCoord.y, swarmerSampleCoord.z) + float3(0.5,0.5,0.5) - swarmer.position;
 
 	//swarmer.direction = normalize(lerp(swarmer.direction, normalize(bestDirection), traceAttraction));
-	swarmer.direction = normalize(lerp(swarmer.direction, normalize(dir), traceAttraction));
+	swarmer.direction = normalize(lerp(swarmer.direction, normalize(traceDir), traceAttraction));
 	//swarmer.color = float3(traceAtSample * 100, 0, 0);//float3(float(swarmerSampleCoord.x) / 100.0, float(swarmerSampleCoord.y) / 100.0, float(swarmerSampleCoord.z) / 100.0);  
-	//swarmer.color = float3(worldTex[swarmerSampleCoord].y, 0, 0);
+	swarmer.color = float3(worldTex[swarmerSampleCoord].y / maxPopulation, 0, 0);
 
 	//swarmer.color = float3(float(id.x) / 100.0, float(id.y) / 100.0, float(id.z) / 100.0);
 	//swarmer.color = swarmer.position/100;

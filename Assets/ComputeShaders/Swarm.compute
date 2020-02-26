@@ -97,9 +97,9 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	{
 		worldTex[prevPosCoord] = float4(worldTex[prevPosCoord].x, worldTex[prevPosCoord].y - 1, 0, 0);
 		worldTex[posCoord] = float4(worldTex[posCoord].x, worldTex[posCoord].y + 1, 0, 0);
-		swarmer.color = float3(1,0,0);
+		//swarmer.color = worldTex[posCoord].xyz;
 	}
-	
+	//swarmer.color = float3(1,0,0) * worldTex[posCoord].y;
 	// Check if inside bounds
 	bool insideWidth = swarmer.position.x >= 1.5 && swarmer.position.x <= 98.5;
 	bool insideHeight = swarmer.position.y >= 1.5 && swarmer.position.y <= 98.5;
@@ -137,11 +137,14 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 	float3 bestDir = swarmer.position + swarmer.direction * 1.5;
 	float bestTrace = 0;
 
+	float maxPopulation = 20;
+
 	[unroll]
 	for (int i = 0; i < 6; i++)
 	{
 		float3 dir = sampleDirs[i];
 		float trace = worldTex[dir].x;
+		trace *= step(worldTex[dir].y, maxPopulation);
 
 		float stepVal = step(bestTrace, trace);
 		// Kombinera detta med att kolla population och multiplicera..swarmers måste uppdatera population.

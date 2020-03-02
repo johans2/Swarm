@@ -26,7 +26,8 @@ public class Swarm : MonoBehaviour
     public Material worldMaterial;
     public Material swarmerMaterial;
     private RenderTexture worldTexture;
-    public ComputeShader swarmComputShader;
+    public ComputeShader swarmComputeShader;
+    public ComputeShader worldComputeShader;
     public int numSwarmers = 100000;
     public float traceAdd = 0.01f;
     public float traceDecay = 0.01f;
@@ -35,8 +36,8 @@ public class Swarm : MonoBehaviour
     public float swarmerSpeed = 30;
     public float randomness = 0.3f;
 
-    private int kernel;
-    private ComputeBuffer worldBuffer;
+    private int swarmKernel;
+    private int worldKernel;
     private ComputeBuffer swarmBuffer;
 
     private WorldNode[] debugWorldNodes;
@@ -49,9 +50,9 @@ public class Swarm : MonoBehaviour
     private float sampleSpread = 60f;
 
     private RenderTexture CreateRenderTexture() {
-        RenderTexture r = new RenderTexture(100, 100, 0, RenderTextureFormat.ARGB32);
+        RenderTexture r = new RenderTexture(300, 300, 0, RenderTextureFormat.ARGB32);
         r.dimension = UnityEngine.Rendering.TextureDimension.Tex3D;
-        r.volumeDepth = 100;
+        r.volumeDepth = 300;
         r.enableRandomWrite = true;
         r.Create();
         return r;
@@ -80,14 +81,16 @@ public class Swarm : MonoBehaviour
 
     void Start()
     {
-        kernel = swarmComputShader.FindKernel("SwarmMain");
+        transform.position = HivePosition;
+
+        swarmKernel = swarmComputeShader.FindKernel("SwarmMain");
+        worldKernel = swarmComputeShader.FindKernel("WorldUpdateMain");
 
         // Create rotation matrices
         CreateRotationMatrices();
 
         // Create and init compute buffers
         worldTexture = CreateRenderTexture();
-        worldBuffer = new ComputeBuffer(NumWorldNodes, 16);
         swarmBuffer = new ComputeBuffer(numSwarmers, 56);
         Swarmer[] swarmers = new Swarmer[numSwarmers];
         for (int i = 0; i < swarmers.Length; i++)
@@ -103,37 +106,39 @@ public class Swarm : MonoBehaviour
                                                 Random.Range(-1.0f, 1.0f)).normalized;
             swarmers[i].life = Random.Range(0f,3.0f);
 
-            swarmers[i].startDelay = 0;// Random.Range(0, 15f);
+            swarmers[i].startDelay = 0;
+            
+            swarmers[i].color = new Vector3(0,0,0);
         }
         swarmBuffer.SetData(swarmers);
         
-        // Set comput shader data
-        swarmComputShader.SetInt("width", worldSize.x);
-        swarmComputShader.SetInt("height", worldSize.y);
-        swarmComputShader.SetInt("depth", worldSize.z);
-        swarmComputShader.SetBuffer(kernel, "world", worldBuffer);
-        swarmComputShader.SetTexture(kernel, "worldTex", worldTexture);
-        swarmComputShader.SetBuffer(kernel, "swarmers", swarmBuffer);
-        swarmComputShader.SetFloats("hiveX", HivePosition.x);
-        swarmComputShader.SetFloats("hiveY", HivePosition.y);
-        swarmComputShader.SetFloats("hiveZ", HivePosition.z);
-        swarmComputShader.SetFloats("traceAdd", traceAdd);
-        swarmComputShader.SetFloats("traceDecay", traceDecay);
-        swarmComputShader.SetFloat("traceAttraction", traceAttraction);
-        swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
-        swarmComputShader.SetMatrix("rot1", rotMat1);
-        swarmComputShader.SetMatrix("rot2", rotMat2);
-        swarmComputShader.SetMatrix("rot3", rotMat3);
-        swarmComputShader.SetMatrix("rot4", rotMat4);
-        swarmComputShader.SetMatrix("rot5", rotMat5);
-        swarmComputShader.SetMatrix("rot6", rotMat6);
-        swarmComputShader.SetFloat("randomness", randomness);
+        // Set swarm comput shader data
+        swarmComputeShader.SetInt("width", worldSize.x);
+        swarmComputeShader.SetInt("height", worldSize.y);
+        swarmComputeShader.SetInt("depth", worldSize.z);
+        swarmComputeShader.SetTexture(swarmKernel, "worldTex", worldTexture);
+        swarmComputeShader.SetBuffer(swarmKernel, "swarmers", swarmBuffer);
+        swarmComputeShader.SetFloats("hiveX", HivePosition.x);
+        swarmComputeShader.SetFloats("hiveY", HivePosition.y);
+        swarmComputeShader.SetFloats("hiveZ", HivePosition.z);
+        swarmComputeShader.SetFloats("traceAdd", traceAdd);
+        swarmComputeShader.SetFloats("traceDecay", traceDecay);
+        swarmComputeShader.SetFloat("traceAttraction", traceAttraction);
+        swarmComputeShader.SetFloat("swarmerSpeed", swarmerSpeed);
+        swarmComputeShader.SetMatrix("rot1", rotMat1);
+        swarmComputeShader.SetMatrix("rot2", rotMat2);
+        swarmComputeShader.SetMatrix("rot3", rotMat3);
+        swarmComputeShader.SetMatrix("rot4", rotMat4);
+        swarmComputeShader.SetMatrix("rot5", rotMat5);
+        swarmComputeShader.SetMatrix("rot6", rotMat6);
+        swarmComputeShader.SetFloat("randomness", randomness);
+
+        swarmComputeShader.SetTexture(worldKernel, "worldTex", worldTexture);
 
         Debug.Log($"Hiveposition: {HivePosition}");
 
 
         // Set rendering materials data
-        worldMaterial.SetBuffer("world", worldBuffer);
         swarmerMaterial.SetBuffer("swarmers", swarmBuffer);
 
 
@@ -142,16 +147,19 @@ public class Swarm : MonoBehaviour
     }
 
 
-    void FixedUpdate()
+    void Update()
     {
-        swarmComputShader.SetFloat("deltaTime", Time.deltaTime);
-        swarmComputShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);
-        swarmComputShader.Dispatch(kernel, 10, 10, 10);
-        swarmComputShader.SetFloats("traceAdd", traceAdd);
-        swarmComputShader.SetFloats("traceDecay", traceDecay);
-        swarmComputShader.SetFloat("traceAttraction", traceAttraction);
-        swarmComputShader.SetFloat("swarmerSpeed", swarmerSpeed);
-        swarmComputShader.SetFloat("randomness", randomness);
+        swarmComputeShader.SetFloat("deltaTime", Time.deltaTime);
+        swarmComputeShader.SetFloat("elapsedTime", Time.timeSinceLevelLoad);
+        swarmComputeShader.SetFloats("traceAdd", traceAdd);
+        swarmComputeShader.SetFloats("traceDecay", traceDecay);
+        swarmComputeShader.SetFloat("traceAttraction", traceAttraction);
+        swarmComputeShader.SetFloat("swarmerSpeed", swarmerSpeed);
+        swarmComputeShader.SetFloat("randomness", randomness);
+
+        swarmComputeShader.Dispatch(worldKernel, 30, 30, 30);
+
+        swarmComputeShader.Dispatch(swarmKernel, 1000, 1, 1);
 
 
         //worldBuffer.GetData(reNodes); Buffer filled!
@@ -170,7 +178,6 @@ public class Swarm : MonoBehaviour
 
     private void OnDestroy()
     {
-        worldBuffer.Dispose();
         swarmBuffer.Dispose();
         
     }

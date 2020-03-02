@@ -56,7 +56,7 @@
 			fixed4 frag(v2f i) : SV_Target
 			{
 				fixed4 col = _Color;
-				col.rgb += i.color;
+				col.rgb = i.color;
 				return col;
 			}
 			ENDCG

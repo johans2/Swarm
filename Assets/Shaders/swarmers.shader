@@ -55,6 +55,7 @@
 
 			fixed4 frag(v2f i) : SV_Target
 			{
+				clip(1 - i.color.r);
 				fixed4 col = _Color;
 				col.rgb = i.color;
 				return col;

@@ -1,0 +1,126 @@
+﻿#pragma kernel TargetWorldUpdateMain
+#pragma kernel TargetSwarmMain
+
+struct Swarmer {
+    float3 position;		// = 12
+	float3 previousPosition;// = 12
+	float3 direction;		// = 12
+    float goScout;			// = 4
+	float goHome;		    // = 4
+	float3 color;			// = 12
+};
+
+struct SwarmTarget {
+    float3 position;
+    float hp;
+};
+
+RWStructuredBuffer<Swarmer> swarmers;
+RWStructuredBuffer<SwarmTarget> targets;
+RWTexture3D<float4> worldTex;
+float hiveX;
+float hiveY;
+float hiveZ;
+float swarmerVelocity;
+float deltaTime;
+float elapsedTime;
+int width;
+int height;
+int depth;
+float curlE;
+float dir;
+float traceAdd;
+float traceDecay;
+float traceAttraction;
+float swarmerSpeed;
+float randomness;
+float hiveRadius;
+
+
+float4x4 rot1;
+float4x4 rot2;
+float4x4 rot3;
+float4x4 rot4;
+float4x4 rot5;
+float4x4 rot6;
+
+float3 samplePositions[6];
+
+uint rng_state;
+uint rand_xorshift()
+{
+	rng_state ^= (rng_state << 13);
+	rng_state ^= (rng_state >> 17);
+	rng_state ^= (rng_state << 5);
+	return rng_state;
+}
+
+uint wang_hash(uint seed)
+{
+	seed = (seed ^ 61) ^ (seed >> 16);
+	seed *= 9;
+	seed = seed ^ (seed >> 4);
+	seed *= 0x27d4eb2d;
+	seed = seed ^ (seed >> 15);
+	return seed;
+}
+
+float3 RandomDirection(int seed) {
+	rng_state = seed;
+	float r0 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+	float r1 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+	float r2 = float(rand_xorshift()) * (1.0 / 4294967296.0) * 2 - 1;
+	return normalize(float3(r0, r1, r2));
+}
+
+
+[numthreads(10, 10, 10)]
+void TargetWorldUpdateMain(uint3 id : SV_DispatchThreadID) {
+	// Decay the trace
+	float4 current = worldTex[id.xyz];
+	float4 updated = float4(saturate(current.x - traceDecay * deltaTime), current.y, 0, 0);
+	worldTex[id.xyz] = updated;
+}
+
+
+[numthreads(1000,1,1)]
+void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
+{
+	int sampleIndex = id.x;
+	
+    float3 hivePos = float3(hiveX, hiveY, hiveZ);
+
+	// Get the swarmer from the buffer
+	Swarmer swarmer = swarmers[sampleIndex];
+
+    float distanceToHive = distance(swarmer.position, hivePos);
+
+    float dirSpeed = 1;
+
+    if(distanceToHive <= hiveRadius) {
+        swarmer.goHome -= deltaTime;
+        swarmer.goScout += deltaTime;
+        dirSpeed = 0.5;
+    }else {
+        swarmer.goHome += deltaTime;
+        swarmer.goScout -= deltaTime;
+        dirSpeed = 2;
+    }
+
+    float3 scoutDir = swarmer.direction;
+    float3 toHiveDir = normalize(hivePos - swarmer.position);
+
+    float dirStep = step(swarmer.goHome, swarmer.goScout);
+
+    swarmer.direction = lerp(toHiveDir, scoutDir, dirStep);
+
+	// Update the swarmer position;
+	swarmer.previousPosition = swarmer.position;
+	swarmer.position += normalize(swarmer.direction) * deltaTime * swarmerSpeed * dirSpeed;
+	//+ RandomDirection(wang_hash(sampleIndex) * 0.1
+
+    swarmer.color = float3(0,1,0);
+
+	swarmers[sampleIndex] = swarmer;
+
+}

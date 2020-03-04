@@ -117,7 +117,7 @@ void SwarmMain (uint3 id : SV_DispatchThreadID)
 
 	if (!insideWidth || !insideHeight || !insideDepth)
 	{
-		swarmer.direction = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position) + RandomDirection(sampleIndex) * 0);
+		swarmer.direction = normalize(normalize(float3(hiveX, hiveY, hiveZ) - swarmer.position));
 	}
 
 	// Get the swarmer world coord

@@ -102,8 +102,8 @@ void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
         swarmer.goScout += deltaTime;
         dirSpeed = 0.5;
     }else {
-        swarmer.goHome += deltaTime;
-        swarmer.goScout -= deltaTime;
+        swarmer.goHome += deltaTime * 0.5;
+        swarmer.goScout -= deltaTime * 0.5;
         dirSpeed = 2;
     }
 

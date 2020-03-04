@@ -106,9 +106,9 @@ public class TargetSwarm : MonoBehaviour
             swarmers[i].direction = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f)).normalized;
-            swarmers[i].goScout = 0;
+            swarmers[i].goScout = Random.Range(-10,10);
 
-            swarmers[i].goHome = 0;
+            swarmers[i].goHome = Random.Range(-10,10);
             
             swarmers[i].color = new Vector3(0,0,0);
         }

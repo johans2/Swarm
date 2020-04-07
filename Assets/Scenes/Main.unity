@@ -880,7 +880,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1180056162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -898,7 +898,7 @@ MonoBehaviour:
   swarmerMaterial: {fileID: 2100000, guid: 9f702ceaccae7044ab28bf7704f1df75, type: 2}
   swarmComputeShader: {fileID: 7200000, guid: b6ae997d2d1261641a168e201c64c291, type: 3}
   worldComputeShader: {fileID: 0}
-  numSwarmers: 200000
+  numSwarmers: 1000000
   traceAdd: 0.2
   traceDecay: 0.8
   spawnRange: 1
@@ -1204,7 +1204,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1998049066
 MonoBehaviour:
   m_ObjectHideFlags: 0

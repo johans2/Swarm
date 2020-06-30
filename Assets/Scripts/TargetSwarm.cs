@@ -11,12 +11,17 @@ public class TargetSwarm : MonoBehaviour
     }
 
     struct Swarmer {
+        public Vector3 color;
         public Vector3 position;
         public Vector3 previousPosition;
         public Vector3 direction;
-        public float goScout;
-        public float goHome;
-        public Vector3 color;
+        public float scent;
+        public float pheromoneScent;
+    }
+
+    struct SwarmTarget {
+        public Vector3 position;
+        public float hp;
     }
 
     private int NumWorldNodes => worldSize.x * worldSize.y * worldSize.z;
@@ -91,26 +96,27 @@ public class TargetSwarm : MonoBehaviour
         // Create rotation matrices
         CreateRotationMatrices();
 
-        // Create and init compute buffers
+        // Create the worldtexture
         worldTexture = CreateRenderTexture();
+        
+        // Create and init swarmer compute buffers
         swarmBuffer = new ComputeBuffer(numSwarmers, 56);
         Swarmer[] swarmers = new Swarmer[numSwarmers];
         for (int i = 0; i < swarmers.Length; i++)
         {
-            swarmers[i].position = HivePosition + new Vector3(  Random.Range(-spawnRange, spawnRange),
+            swarmers[i].color = new Vector3(0.20f,1f,0f);
+            swarmers[i].position = HivePosition;/* + new Vector3(  Random.Range(-spawnRange, spawnRange),
                                                                 Random.Range(-spawnRange, spawnRange),
-                                                                Random.Range(-spawnRange, spawnRange));
+                                                                Random.Range(-spawnRange, spawnRange));*/
 
             swarmers[i].previousPosition = swarmers[i].position;
 
             swarmers[i].direction = new Vector3( Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f), 
                                                 Random.Range(-1.0f, 1.0f)).normalized;
-            swarmers[i].goScout = Random.Range(-10,10);
 
-            swarmers[i].goHome = Random.Range(-10,10);
-            
-            swarmers[i].color = new Vector3(0,0,0);
+            swarmers[i].scent = 0;
+            swarmers[i].pheromoneScent = 0;
         }
         swarmBuffer.SetData(swarmers);
         
@@ -120,6 +126,7 @@ public class TargetSwarm : MonoBehaviour
         swarmComputeShader.SetInt("depth", worldSize.z);
         swarmComputeShader.SetTexture(swarmKernel, "worldTex", worldTexture);
         swarmComputeShader.SetBuffer(swarmKernel, "swarmers", swarmBuffer);
+        //swarmComputeShader.SetBuffer(swarmtar);
         swarmComputeShader.SetFloats("hiveX", HivePosition.x);
         swarmComputeShader.SetFloats("hiveY", HivePosition.y);
         swarmComputeShader.SetFloats("hiveZ", HivePosition.z);

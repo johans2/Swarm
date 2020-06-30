@@ -2,12 +2,12 @@
 #pragma kernel TargetSwarmMain
 
 struct Swarmer {
+    float3 color;           // = 12
     float3 position;		// = 12
 	float3 previousPosition;// = 12
 	float3 direction;		// = 12
-    float goScout;			// = 4
-	float goHome;		    // = 4
-	float3 color;			// = 12
+	float scent;            // = 4
+	float pheromoneScent;   // = 4
 };
 
 struct SwarmTarget {
@@ -96,15 +96,14 @@ void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
     // Calculate scout direction and back to hive diretion.
     float3 scoutDir = swarmer.direction;
     float3 toHiveDir = normalize(hivePos - swarmer.position);
-
-    float3 chosenDirection = normalize( lerp(scoutDir, toHiveDir, sin(elapsedTime) + 0.5f));
-    
+    float3 defaultDirection = normalize( lerp(scoutDir, toHiveDir, sin(elapsedTime) + 0.5f));
+        
+    defaultDirection = scoutDir * normalize(sin(elapsedTime) + 0.000000000001f);
+        
     swarmer.previousPosition = swarmer.position;
-    swarmer.position = swarmer.previousPosition + chosenDirection * deltaTime * swarmerSpeed;
-    
+    swarmer.position = swarmer.previousPosition + defaultDirection * deltaTime * swarmerSpeed;
     
     swarmer.color = float3(0,1,0);
 
 	swarmers[sampleIndex] = swarmer;
-
 }

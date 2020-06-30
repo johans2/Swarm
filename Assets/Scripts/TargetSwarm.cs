@@ -99,7 +99,7 @@ public class TargetSwarm : MonoBehaviour
         {
             swarmers[i].position = HivePosition + new Vector3(  Random.Range(-spawnRange, spawnRange),
                                                                 Random.Range(-spawnRange, spawnRange),
-                                                                Random.Range(-spawnRange, spawnRange)).normalized;
+                                                                Random.Range(-spawnRange, spawnRange));
 
             swarmers[i].previousPosition = swarmers[i].position;
 

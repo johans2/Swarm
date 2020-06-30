@@ -92,33 +92,17 @@ void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
 
 	// Get the swarmer from the buffer
 	Swarmer swarmer = swarmers[sampleIndex];
-
-    float distanceToHive = distance(swarmer.position, hivePos);
-
-    float dirSpeed = 1;
-
-    if(distanceToHive <= hiveRadius) {
-        swarmer.goHome -= deltaTime;
-        swarmer.goScout += deltaTime;
-        dirSpeed = 0.5;
-    }else {
-        swarmer.goHome += deltaTime * 0.5;
-        swarmer.goScout -= deltaTime * 0.5;
-        dirSpeed = 2;
-    }
-
+    
+    // Calculate scout direction and back to hive diretion.
     float3 scoutDir = swarmer.direction;
     float3 toHiveDir = normalize(hivePos - swarmer.position);
 
-    float dirStep = step(swarmer.goHome, swarmer.goScout);
-
-    swarmer.direction = lerp(toHiveDir, scoutDir, dirStep);
-
-	// Update the swarmer position;
-	swarmer.previousPosition = swarmer.position;
-	swarmer.position += normalize(swarmer.direction) * deltaTime * swarmerSpeed * dirSpeed;
-	//+ RandomDirection(wang_hash(sampleIndex) * 0.1
-
+    float3 chosenDirection = normalize( lerp(scoutDir, toHiveDir, sin(elapsedTime) + 0.5f));
+    
+    swarmer.previousPosition = swarmer.position;
+    swarmer.position = swarmer.previousPosition + chosenDirection * deltaTime * swarmerSpeed;
+    
+    
     swarmer.color = float3(0,1,0);
 
 	swarmers[sampleIndex] = swarmer;

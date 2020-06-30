@@ -34,6 +34,7 @@ public class TargetSwarm : MonoBehaviour
     public ComputeShader swarmComputeShader;
     public Transform hiveTransform;
     public int numSwarmers = 100000;
+    public Transform[] targets;
     public float hiveRadius = 10;
     public float traceAdd = 0.01f;
     public float traceDecay = 0.01f;
@@ -45,6 +46,7 @@ public class TargetSwarm : MonoBehaviour
     private int swarmKernel;
     private int worldKernel;
     private ComputeBuffer swarmBuffer;
+    private ComputeBuffer swarmTargetBuffer;
 
     private WorldNode[] debugWorldNodes;
     private Matrix4x4 rotMat1;
@@ -120,13 +122,24 @@ public class TargetSwarm : MonoBehaviour
         }
         swarmBuffer.SetData(swarmers);
         
+        // Create and init swarm targets compute buffer
+        swarmTargetBuffer = new ComputeBuffer(targets.Length, 16);
+        SwarmTarget[] swarmTargets = new SwarmTarget[targets.Length];
+        for (int i = 0; i < swarmTargets.Length; i++) {
+            swarmTargets[i].position = HivePosition + targets[i].localPosition;
+            swarmTargets[i].hp = 1;
+        }
+        swarmTargetBuffer.SetData(swarmTargets);
+        
         // Set swarm comput shader data
         swarmComputeShader.SetInt("width", worldSize.x);
         swarmComputeShader.SetInt("height", worldSize.y);
         swarmComputeShader.SetInt("depth", worldSize.z);
         swarmComputeShader.SetTexture(swarmKernel, "worldTex", worldTexture);
         swarmComputeShader.SetBuffer(swarmKernel, "swarmers", swarmBuffer);
-        //swarmComputeShader.SetBuffer(swarmtar);
+        swarmComputeShader.SetBuffer(swarmKernel, "targets", swarmTargetBuffer);
+        swarmComputeShader.SetInt("numTargets", swarmTargets.Length);
+        
         swarmComputeShader.SetFloats("hiveX", HivePosition.x);
         swarmComputeShader.SetFloats("hiveY", HivePosition.y);
         swarmComputeShader.SetFloats("hiveZ", HivePosition.z);
@@ -191,6 +204,6 @@ public class TargetSwarm : MonoBehaviour
     private void OnDestroy()
     {
         swarmBuffer.Dispose();
-        
+        swarmTargetBuffer.Dispose();
     }
 }

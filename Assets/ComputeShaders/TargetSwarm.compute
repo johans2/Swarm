@@ -8,42 +8,55 @@ struct Swarmer {
 	float3 direction;		// = 12
 	float scent;            // = 4
 	float pheromoneScent;   // = 4
+	// Stride                  = 56
 };
 
 struct SwarmTarget {
-    float3 position;
-    float hp;
+    float3 position;    // = 12
+    float hp;           // = 4
+    // Stride              = 16
 };
 
-RWStructuredBuffer<Swarmer> swarmers;
-RWStructuredBuffer<SwarmTarget> targets;
-RWTexture3D<float4> worldTex;
+
+// Hive properties
+float hiveRadius;
 float hiveX;
 float hiveY;
 float hiveZ;
-float swarmerVelocity;
-float deltaTime;
-float elapsedTime;
-int width;
-int height;
-int depth;
-float curlE;
-float dir;
+
+// Swarmer properties
+RWStructuredBuffer<Swarmer> swarmers;
 float traceAdd;
 float traceDecay;
 float traceAttraction;
 float swarmerSpeed;
 float randomness;
-float hiveRadius;
 
+// Swarm target properties
+RWStructuredBuffer<SwarmTarget> targets;
+int numTargets;
 
+// World properties
+RWTexture3D<float4> worldTex;
+int width;
+int height;
+int depth;
+
+// Time properties
+float deltaTime;
+float elapsedTime;
+
+float curlE;
+float dir;
+static float EPSILON = 0.00000001;
+
+// Sample vector rotation matrices
 float4x4 rot1;
 float4x4 rot2;
 float4x4 rot3;
 float4x4 rot4;
 float4x4 rot5;
 float4x4 rot6;
-
 float3 samplePositions[6];
 
 uint rng_state;
@@ -93,12 +106,19 @@ void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
 	// Get the swarmer from the buffer
 	Swarmer swarmer = swarmers[sampleIndex];
     
-    // Calculate scout direction and back to hive diretion.
-    float3 scoutDir = swarmer.direction;
-    float3 toHiveDir = normalize(hivePos - swarmer.position);
-    float3 defaultDirection = normalize( lerp(scoutDir, toHiveDir, sin(elapsedTime) + 0.5f));
+    // Calculate the default move diretion.
+    float3 defaultDirection = swarmer.direction * normalize(sin(elapsedTime) + EPSILON );
         
-    defaultDirection = scoutDir * normalize(sin(elapsedTime) + 0.000000000001f);
+    // Calculate the distance to the targets
+    for(int i = 0; i < numTargets; i++) {
+        SwarmTarget target = targets[i];
+        float distanceToTarget = distance(target.position, swarmer.position);
+        if(distanceToTarget < 5.0) {
+            defaultDirection = normalize(target.position - swarmer.position);
+        }
+    }
+        
+        
         
     swarmer.previousPosition = swarmer.position;
     swarmer.position = swarmer.previousPosition + defaultDirection * deltaTime * swarmerSpeed;

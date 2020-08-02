@@ -117,8 +117,18 @@ void TargetSwarmMain (uint3 id : SV_DispatchThreadID)
             defaultDirection = normalize(target.position - swarmer.position);
         }
     }
-        
-        
+      
+    // State 1: Moving out of the hive in a somawhat random direction
+    // State 2: Moving toward the hive since due to fatigue.
+    // State 3: Found a trance and following it
+    // State 4: Found a target and moving towards it
+    // State 5: Reached a target and now movint back to the hive. 
+            
+    /*
+    float randomness = 0.1;        
+    int random = wang_hash(id.x+id.y+id.z);
+    defaultDirection = lerp(defaultDirection, RandomDirection(random), randomness); 
+    */
         
     swarmer.previousPosition = swarmer.position;
     swarmer.position = swarmer.previousPosition + defaultDirection * deltaTime * swarmerSpeed;
